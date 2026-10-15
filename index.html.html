@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Policía de Mendoza - Control Caminero & Emergencias</title>
+    <!-- Tailwind CSS desde CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        policia: {
+                            50: '#f0f4f8',
+                            100: '#d9e2ec',
+                            500: '#102a43',
+                            800: '#0b1b2b',
+                            900: '#06101e',
+                        },
+                        alerta: {
+                            500: '#e53e3e',
+                            600: '#c53030',
+                            700: '#9b2c2c',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #080f1a;
+            color: #f1f5f9;
+        }
+        .pulse-red {
+            animation: pulse-red-anim 1.8s infinite;
+        }
+        @keyframes pulse-red-anim {
+            0% { box-shadow: 0 0 0 0 rgba(229, 62, 62, 0.7); }
+            70% { box-shadow: 0 0 0 12px rgba(229, 62, 62, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(229, 62, 62, 0); }
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b1b2b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e3a5f;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-red-600 selection:text-white">
+
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div>
+        <!-- CABECERA INSTITUCIONAL -->
+        <header class="bg-gradient-to-r from-policia-900 via-policia-800 to-slate-900 border-b border-slate-800 sticky top-0 z-50 shadow-xl">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-red-600/20 p-2.5 rounded-xl border border-red-500/40 text-red-500">
+                            <i class="fa-solid fa-shield-halved text-2xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-red-500">Ministerio de Seguridad y Justicia</h1>
+                            <p class="text-base sm:text-lg font-extrabold text-white leading-tight">Policía de Mendoza <span class="text-slate-400 font-normal">| Control Caminero & Emergencias</span></p>
+                        </div>
+                    </div>
+                    
+                    <!-- Indicador PWA y Estado offline -->
+                    <div class="flex items-center space-x-2 self-start md:self-auto text-xs">
+                        <span class="flex items-center px-2.5 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/50 text-emerald-400 font-medium">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5 animate-ping"></span>
+                            PWA Activa (Offline Ready)
+                        </span>
+                        <span class="bg-slate-800 text-slate-300 px-2 py-1 rounded-md border border-slate-700">v2.0 Operativa</span>
+                    </div>
+                </div>
+
+                <!-- BARRA DE BÚSQUEDA INTELIGENTE EN TIEMPO REAL -->
+                <div class="mt-3 relative">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </div>
+                    <input type="text" id="searchInput" onkeyup="filtrarContenido()" 
+                        placeholder="Buscar protocolo, sustancia (ej. Cianuro, Nafta, Ácido), código ONU, QR, 911, Ley 7722..." 
+                        class="w-full pl-10 pr-10 py-2.5 bg-slate-900/90 border border-slate-700/80 rounded-xl text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all">
+                    <button id="clearSearch" onclick="limpiarBusqueda()" class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- NAVEGACIÓN PRINCIPAL (PESTAÑAS) -->
+                <nav class="flex space-x-1 sm:space-x-2 mt-3 overflow-x-auto pb-1 no-scrollbar text-xs sm:text-sm">
+                    <button onclick="cambiarPestana('emergencia')" id="tab-emergencia" 
+                        class="tab-btn flex items-center space-x-2 px-4 py-2 rounded-lg font-semibold whitespace-nowrap transition-all bg-red-600 text-white shadow-lg shadow-red-900/40 border border-red-500">
+                        <i class="fa-solid fa-triangle-exclamation animate-bounce"></i>
+                        <span>1. ALERTA Y ACCIDENTES</span>
+                    </button>
+                    <button onclick="cambiarPestana('control')" id="tab-control" 
+                        class="tab-btn flex items-center space-x-2 px-4 py-2 rounded-lg font-medium text-slate-300 hover:bg-slate-800 hover:text-white whitespace-nowrap transition-all border border-transparent">
+                        <i class="fa-solid fa-truck-ramp-box"></i>
+                        <span>2. CONTROL EN RUTA & LEYES</span>
+                    </button>
+                    <button onclick="cambiarPestana('registro')" id="tab-registro" 
+                        class="tab-btn flex items-center space-x-2 px-4 py-2 rounded-lg font-medium text-slate-300 hover:bg-slate-800 hover:text-white whitespace-nowrap transition-all border border-transparent">
+                        <i class="fa-solid fa-clipboard-check"></i>
+                        <span>3. REGISTRO DE NOTAS EN CAMPO</span>
+                    </button>
+                    <button onclick="cambiarPestana('piloto')" id="tab-piloto" 
+                        class="tab-btn flex items-center space-x-2 px-4 py-2 rounded-lg font-medium text-slate-300 hover:bg-slate-800 hover:text-white whitespace-nowrap transition-all border border-transparent">
+                        <i class="fa-solid fa-diagram-project"></i>
+                        <span>4. PLAN INSTITUCIONAL</span>
+                    </button>
+                </nav>
+            </div>
+        </header>
+
+        <!-- CONTENIDO PRINCIPAL CAMBIANTE -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+            <!-- ========================================== -->
+            <!-- PESTAÑA 1: EMERGENCIA Y ACCIDENTES VIALES -->
+            <!-- ========================================== -->
+            <section id="sec-emergencia" class="space-y-6">
+                <!-- Alerta Protocolo Inmediato -->
+                <div class="bg-gradient-to-r from-red-950 via-slate-900 to-red-950 border-2 border-red-600/80 rounded-2xl p-5 sm:p-6 shadow-2xl relative overflow-hidden">
+                    <div class="absolute -right-10 -bottom-10 opacity-10 text-red-500 pointer-events-none">
+                        <i class="fa-solid fa-radiation text-[180px]"></i>
+                    </div>
+                    <div class="relative z-10 space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <span class="inline-flex items-center px-3 py-1 rounded-md bg-red-600 text-white font-extrabold text-xs uppercase tracking-widest pulse-red">
+                                <i class="fa-solid fa-bell mr-1.5"></i> Protocolo de Actuación Crítica Inmediata
+                            </span>
+                            <div class="flex space-x-2">
+                                <button onclick="simularLlamadaCEO()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs flex items-center space-x-1.5 transition-colors shadow">
+                                    <i class="fa-solid fa-phone-volume"></i>
+                                    <span>Dar Alerta al CEO / 911</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <h2 class="text-xl sm:text-2xl font-black text-white">Siniestro / Volcamiento de Cisterna o Carga Peligrosa</h2>
+                        <p class="text-slate-300 text-sm leading-relaxed">
+                            Pautas obligatorias de primera respuesta para el personal policial interviniente antes de la llegada de Bomberos, Defensa Civil o Policía Ambiental.
+                        </p>
+
+                        <!-- Reglas de Oro -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
+                            <div class="bg-slate-900/90 border border-slate-700/80 p-3 rounded-xl flex items-start space-x-3">
+                                <i class="fa-solid fa-wind text-cyan-400 text-xl mt-1"></i>
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-200 uppercase">1. Posicionamiento</h4>
+                                    <p class="text-xs text-slate-400">Ubícate siempre **a favor del viento** (viento a la espalda) y cuesta arriba.</p>
+                                </div>
+                            </div>
+                            <div class="bg-slate-900/90 border border-slate-700/80 p-3 rounded-xl flex items-start space-x-3">
+                                <i class="fa-solid fa-ruler-horizontal text-amber-400 text-xl mt-1"></i>
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-200 uppercase">2. Distancia Mínima</h4>
+                                    <p class="text-xs text-slate-400">Aislar perímetro inmediato a **300m - 800m** según la carga (Ver paneles).</p>
+                                </div>
+                            </div>
+                            <div class="bg-slate-900/90 border border-slate-700/80 p-3 rounded-xl flex items-start space-x-3">
+                                <i class="fa-solid fa-mask-ventilator text-red-400 text-xl mt-1"></i>
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-200 uppercase">3. No inhalar / No tocar</h4>
+                                    <p class="text-xs text-slate-400">No ingresar a la nube de vapor ni pisar derrames de líquidos no identificados.</p>
+                                </div>
+                            </div>
+                            <div class="bg-slate-900/90 border border-slate-700/80 p-3 rounded-xl flex items-start space-x-3">
+                                <i class="fa-solid fa-ban-smoke text-orange-400 text-xl mt-1"></i>
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-200 uppercase">4. Fuentes de Ignición</h4>
+                                    <p class="text-xs text-slate-400">Apagar motores, celular lejos, prohibido fumar o generar chispas.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TIPOS DE ESCENARIOS Y PROTOCOLOS ESPECÍFICOS -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    
+                    <!-- CASO A: CAMIÓN CISTERNA DE COMBUSTIBLE / GLP -->
+                    <div class="searchable-card bg-slate-900 border border-slate-800 rounded-2xl p-5 hover:border-amber-500/50 transition-all flex flex-col justify-between shadow-lg">
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="p-2.5 bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded-xl">
+                                    <i class="fa-solid fa-fire-flame-curved text-xl"></i>
+                                </span>
+                                <span class="text-[10px] font-bold bg-amber-950 text-amber-400 border border-amber-800 px-2 py-0.5 rounded">Riesgo BLEVE / Explosión</span>
+                            </div>
+                            <h3 class="text-lg font-bold text-white">Camión Cisterna: Combustibles / GLP</h3>
+                            <p class="text-xs text-slate-400">Nafta, Gasoil, Gas Licuado de Petróleo (Propano/Butano), Metanol.</p>
+                            
+                            <ul class="text-xs text-slate-300 space-y-2 border-t border-slate-800 pt-3">
+                                <li class="flex items-start">
+                                    <i class="fa-solid fa-circle-exclamation text-amber-500 mr-2 mt-0.5 shrink-0"></i>
+                                    <span><strong>Peligro de Explosión:</strong> Fuego expuesto sobre tanque cisterna puede generar explosión masiva por sobrepresión (BLEVE).</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fa-solid fa-shield text-emerald-400 mr-2 mt-0.5 shrink-0"></i>
+                                    <span><strong>Aislamiento de Perímetro:</strong> Cortar tránsito en ambos sentidos a <strong>800 metros</strong> a la redonda mínimo.</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fa-solid fa-droplet-slash text-blue-400 mr-2 mt-0.5 shrink-0"></i>
+                                    <span><strong>Derrames en Calzada:</strong> Diques con tierra/arena para evitar que ingrese a acequias o colectores.</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-800 flex justify-between items-center text-xs">
+                            <span class="text-slate-500">Panel ONU Frecuente:</span>
+                            <span class="font-mono bg-slate-800 text-amber-300 px-2 py-1 rounded border border-slate-700">33 / 1203 (Nafta)</span>
+                        </div>
+                    </div>
+
+                    <!-- CASO B: SUSTANCIAS QUÍMICAS CORROSIVAS O TÓXICAS -->
+                    <div class="searchable-card bg-slate-900 border border-slate-800 rounded-2xl p-5 hover:border-red-500/50 transition-all flex flex-col justify-between shadow-lg">
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="p-2.5 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl">
+                                    <i class="fa-solid fa-skull-crossbones text-xl"></i>
+                                </span>
+                                <span class="text-[10px] font-bold bg-red-950 text-red-400 border border-red-800 px-2 py-0.5 rounded">Riesgo Químico Lethal</span>
+                            </div>
+                            <h3 class="text-lg font-bold text-white">Químicos Corrosivos / Tóxicos</h3>
+                            <p class="text-xs text-slate-400">Ácido Sulfúrico, Cianuro de Sodio, Amoníaco, Cloro, Hidróxido.</p>
+
+                            <ul class="text-xs text-slate-300 space-y-2 border-t border-slate-800 pt-3">
+                                <li class="flex items-start">
+                                    <i class="fa-solid fa-circle-exclamation text-red-500 mr-2 mt-0.5 shrink-0"></i>
+                                    <span><strong>Gases Irritantes:</strong> La inhalación de vapores tóxicos puede causar edema pulmonar en minutos.</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fa-solid fa-triangle-exclamation text-amber-400 mr-2 mt-0.5 shrink-0"></i>
+                                    <span><strong>¡Atención con Ácido Sulfúrico!:</strong> NO arrojar agua directamente sobre ácido concentrado (reacción violenta exotérmica).</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fa-solid fa-phone text-emerald-400 mr-2 mt-0.5 shrink-0"></i>
+                                    <span><strong>Acción Inmediata:</strong> Solicitar intervención de Brigada de Materiales Peligrosos (HazMat).</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-800 flex justify-between items-center text-xs">
+                            <span class="text-slate-500">Panel ONU Frecuente:</span>
+                            <span class="font-mono bg-slate-800 text-red-300 px-2 py-1 rounded border border-slate-700">80 / 1830 (Ac. Sulfúrico)</span>
+                        </div>
+                    </div>
+
+                    <!-- CASO C: IMPACTO AMBIENTAL Y CURSOS DE AGUA -->
+                    <div class="searchable-card bg-slate-900 border border-slate-800 rounded-2xl p-5 hover:border-blue-500/50 transition-all flex flex-col justify-between shadow-lg">
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="p-2.5 bg-blue-500/10 border border-blue-500/30 text-blue-400 rounded-xl">
+                                    <i class="fa-solid fa-water text-xl"></i>
+                                </span>
+                                <span class="text-[10px] font-bold bg-blue-950 text-blue-400 border border-blue-800 px-2 py-0.5 rounded">Riesgo Ambiental Crítico</span>
+                            </div>
+                            <h3 class="text-lg font-bold text-white">Derrames en Ríos o Canales</h3>
+                            <p class="text-xs text-slate-400">Cerca del Río Mendoza, Tunuyán, Atuel o redes de canales de riego.</p>
+
+                            <ul class="text-xs text-slate-300 space-y-2 border-t border-slate-800 pt-3">
+                                <li class="flex items-start">
+                                    <i class="fa-solid fa-circle-exclamation text-blue-400 mr-2 mt-0.5 shrink-0"></i>
+                                    <span><strong>Riesgo Potable e Irrigación:</strong> El escurrimiento hacia causas hídricas afecta el consumo poblacional.</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fa-solid fa-bullhorn text-cyan-400 mr-2 mt-0.5 shrink-0"></i>
+                                    <span><strong>Aviso Inmediato:</strong> Notificar a <strong>Departamento General de Irrigación (DGI)</strong> y Policía Ambiental Minera.</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fa-solid fa-mound text-amber-400 mr-2 mt-0.5 shrink-0"></i>
+                                    <span><strong>Contención Física:</strong> Construir barreras de contención hidráulica con maquinaria pesada disponible.</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-800 flex justify-between items-center text-xs">
+                            <span class="text-slate-500">Notificación Directa:</span>
+                            <span class="font-semibold text-blue-300">CEO Central & Irrigación</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- DECODIFICADOR RÁPIDO DE PANELES NARANJA (ONU) -->
+                <div class="searchable-card bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
+                    <h3 class="text-lg font-bold text-white flex items-center mb-3">
+                        <i class="fa-solid fa-square text-amber-500 mr-2"></i> Guía Rápida de Identificación de Riesgo (Paneles Naranja ONU)
+                    </h3>
+                    <p class="text-xs text-slate-400 mb-4">Los camiones cisternas llevan un panel naranja reflectante con dos números. Te explicamos cómo leerlos rápidamente:</p>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Ejemplo visual del panel -->
+                        <div class="bg-amber-500 p-4 rounded-xl text-slate-950 font-mono font-black flex flex-col items-center justify-center border-4 border-slate-900 shadow-inner">
+                            <span class="text-3xl border-b-4 border-slate-950 w-full text-center pb-1">33</span>
+                            <span class="text-3xl pt-1">1203</span>
+                            <span class="text-[10px] font-sans font-bold uppercase tracking-wider mt-2 text-slate-900">Ejemplo: Nafta / Combustible Inflamable</span>
+                        </div>
+
+                        <!-- Significado de números -->
+                        <div class="space-y-2 text-xs">
+                            <div class="bg-slate-800/80 p-2.5 rounded-lg border border-slate-700">
+                                <span class="text-amber-400 font-bold">Número Superior (2 o 3 dígitos):</span>
+                                <p class="text-slate-300">Indica el <strong>Tipo de Riesgo</strong>. Si se repite la cifra (ej. 33), significa incremento de intensidad del peligro.</p>
+                                <p class="text-slate-400 mt-1">2: Gas | 3: Líquido Inflamable | 6: Tóxico | 8: Corrosivo | X: Reacciona con agua</p>
+                            </div>
+                            <div class="bg-slate-800/80 p-2.5 rounded-lg border border-slate-700">
+                                <span class="text-amber-400 font-bold">Número Inferior (4 dígitos):</span>
+                                <p class="text-slate-300">Es el <strong>Código de la Sustancia (Número ONU)</strong> que identifica exactamente el producto químico transportado.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- PESTAÑA 2: CONTROL POLICIAL EN RUTA & LEYES -->
+            <!-- ========================================== -->
+            <section id="sec-control" class="hidden space-y-6">
+                <!-- Banner Operativo -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div>
+                        <span class="bg-blue-950 text-blue-400 border border-blue-800 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase">Puestos Camineros Principales</span>
+                        <h2 class="text-xl font-black text-white mt-2">Fiscalización Operativa de Cargas en Mendoza</h2>
+                        <p class="text-xs text-slate-400 mt-1">Controles sistemáticos en Desaguadero, Uspallata, Zapata, Potrerillos y Pareditas.</p>
+                    </div>
+                    <div class="flex items-center space-x-2 text-xs text-slate-300 bg-slate-800 p-3 rounded-xl border border-slate-700 shrink-0">
+                        <i class="fa-solid fa-qrcode text-2xl text-emerald-400"></i>
+                        <div>
+                            <span class="font-bold text-white block">Guía de Tránsito Digital</span>
+                            <span>Escaneo obligatorio de QR</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MÓDULOS DE VERIFICACIÓN -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                    <!-- TARJETA 1: GUÍA DE TRÁNSITO QR -->
+                    <div class="searchable-card bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg hover:border-slate-700 transition-all">
+                        <div class="text-emerald-400 text-3xl mb-3"><i class="fa-solid fa-qrcode"></i></div>
+                        <h3 class="text-base font-bold text-white mb-2">1. Guía de Tránsito de Minerales</h3>
+                        <p class="text-xs text-slate-400 mb-4">Verificación de legalidad para transporte de áridos, rocas de aplicación y minerales industriales.</p>
+
+                        <div class="space-y-2.5 text-xs">
+                            <div class="bg-slate-800/60 p-2.5 rounded-lg border border-slate-700/50">
+                                <span class="font-semibold text-slate-200">Datos a Cotejar en QR:</span>
+                                <ul class="list-disc list-inside text-slate-400 mt-1 space-y-1">
+                                    <li>Dominio del chasis y acoplado.</li>
+                                    <li>Nombre y CUIT del chofer.</li>
+                                    <li>Cantera/Mina de origen declarada.</li>
+                                    <li>Tonelaje exacto autorizado.</li>
+                                </ul>
+                            </div>
+                            <div class="text-[11px] text-emerald-400 flex items-center">
+                                <i class="fa-solid fa-check-double mr-1.5"></i> Válida solo con código Hash de la Dirección de Minería.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TARJETA 2: RESTRICCIONES LEY 7.722 -->
+                    <div class="searchable-card bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg hover:border-slate-700 transition-all">
+                        <div class="text-amber-400 text-3xl mb-3"><i class="fa-solid fa-gavel"></i></div>
+                        <h3 class="text-base font-bold text-white mb-2">2. Fiscalización Ley N.º 7.722</h3>
+                        <p class="text-xs text-slate-400 mb-4">Control estricto de sustancias químicas en proyectos de minería metalífera.</p>
+
+                        <div class="space-y-2.5 text-xs">
+                            <div class="bg-red-950/40 border border-red-800/50 p-2.5 rounded-lg">
+                                <span class="font-bold text-red-400">Sustancias Prohibidas para Metalífera:</span>
+                                <div class="grid grid-cols-2 gap-1 mt-1 text-slate-300 font-medium">
+                                    <span>• Cianuro</span>
+                                    <span>• Mercurio</span>
+                                    <span>• Ácido Sulfúrico</span>
+                                    <span>• Otras análogas</span>
+                                </div>
+                            </div>
+                            <p class="text-slate-400 text-[11px]">
+                                Exigir hoja de ruta con destino final declarado y certificado de uso industrial no metalífero si aplica.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- TARJETA 3: FICHA DE DATOS DE SEGURIDAD (FDS) -->
+                    <div class="searchable-card bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg hover:border-slate-700 transition-all">
+                        <div class="text-cyan-400 text-3xl mb-3"><i class="fa-solid fa-file-contract"></i></div>
+                        <h3 class="text-base font-bold text-white mb-2">3. Documentación FDS / MSDS</h3>
+                        <p class="text-xs text-slate-400 mb-4">Ficha de Datos de Seguridad obligatoria en cabina del vehículo cargado.</p>
+
+                        <div class="space-y-2.5 text-xs text-slate-300">
+                            <div class="bg-slate-800/60 p-2.5 rounded-lg border border-slate-700/50 space-y-1">
+                                <p><strong>16 Secciones Normalizadas:</strong> Debe detallar nombre comercial, teléfono de emergencia 24hs del fabricante y elementos de protección EPP.</p>
+                            </div>
+                            <p class="text-slate-400 text-[11px]">
+                                Sin esta ficha o con panel ONU ilégible, la unidad no puede continuar viaje.
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- SIMULADOR RÁPIDO DE INSPECCIÓN -->
+                <div class="searchable-card bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
+                    <h3 class="text-base font-bold text-white mb-3">Simulador Interactivo de Inspección por Tipo de Unidad</h3>
+                    <p class="text-xs text-slate-400 mb-4">Selecciona el tipo de transporte detenido en el control policial para ver la lista de chequeo instantánea:</p>
+
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <button onclick="simularChequeo('aridos')" id="btn-aridos" class="px-3 py-1.5 rounded-lg bg-slate-800 text-xs font-semibold text-slate-200 hover:bg-slate-700 border border-slate-700">Camión de Áridos / Ripio</button>
+                        <button onclick="simularChequeo('combustibles')" id="btn-combustibles" class="px-3 py-1.5 rounded-lg bg-slate-800 text-xs font-semibold text-slate-200 hover:bg-slate-700 border border-slate-700">Cisterna de Combustibles</button>
+                        <button onclick="simularChequeo('quimicos')" id="btn-quimicos" class="px-3 py-1.5 rounded-lg bg-slate-800 text-xs font-semibold text-slate-200 hover:bg-slate-700 border border-slate-700">Químicos / Insumos Mineros</button>
+                    </div>
+
+                    <div id="chequeoResultado" class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs space-y-2 text-slate-300">
+                        <span class="text-slate-500 italic">Haz clic en una opción superior para cargar la pauta de inspección rápida...</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- PESTAÑA 3: REGISTRO DIGITAL DE NOTAS EN CAMPO -->
+            <!-- ========================================== -->
+            <section id="sec-registro" class="hidden space-y-6">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="p-2.5 bg-blue-600/20 text-blue-400 rounded-xl border border-blue-500/30">
+                            <i class="fa-solid fa-pen-to-square text-xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-bold text-white">Registro de Inspecciones y Novedades en Puesto Caminero</h2>
+                            <p class="text-xs text-slate-400">Guarde notas locales de controles realizados a vehículos pesados (Almacenamiento Local Seguro / Offline).</p>
+                        </div>
+                    </div>
+
+                    <!-- FORMULARIO DE REGISTRO -->
+                    <form id="formRegistro" onsubmit="guardarNota(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-slate-950 p-4 rounded-xl border border-slate-800">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Puesto Caminero / Control</label>
+                            <select id="inputPuesto" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white focus:ring-1 focus:ring-blue-500">
+                                <option value="Desaguadero">Puesto Desaguadero (Ruta 7)</option>
+                                <option value="Uspallata">Puesto Uspallata (Ruta 7)</option>
+                                <option value="Zapata">Puesto Zapata (Ruta 40)</option>
+                                <option value="Potrerillos">Puesto Potrerillos</option>
+                                <option value="Pareditas">Puesto Pareditas (Valle de Uco)</option>
+                                <option value="Patrullero Movil">Patrullero / Unidad Móvil</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Patente Dominio</label>
+                            <input type="text" id="inputPatente" placeholder="ej. AF 123 JK" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white focus:ring-1 focus:ring-blue-500 uppercase">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Tipo de Carga / Sustancia</label>
+                            <input type="text" id="inputCarga" placeholder="ej. Áridos, Nafta ONU 1203, Yeso..." required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white focus:ring-1 focus:ring-blue-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Estado de Inspección</label>
+                            <select id="inputEstado" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white focus:ring-1 focus:ring-blue-500">
+                                <option value="SIN NOVEDAD">Conforme (Sin Novedad)</option>
+                                <option value="OBSERVADO">Observado (Doc. Incompleta)</option>
+                                <option value="RETENIDO">Retenido / Intervención CEO</option>
+                            </select>
+                        </div>
+
+                        <div class="sm:col-span-2 lg:col-span-4">
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Observaciones / Novedades de la Guía o Vehículo</label>
+                            <textarea id="inputObs" rows="2" placeholder="Detalle observaciones de la guía QR, chofer, remolque o novedades detectadas..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white focus:ring-1 focus:ring-blue-500"></textarea>
+                        </div>
+
+                        <div class="sm:col-span-2 lg:col-span-4 flex justify-end">
+                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-xs flex items-center space-x-2 transition-colors">
+                                <i class="fa-solid fa-floppy-disk"></i>
+                                <span>Guardar Registro Local</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- LISTADO DE REGISTROS GUARDADOS -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-base font-bold text-white flex items-center">
+                            <i class="fa-solid fa-list-check text-emerald-400 mr-2"></i> Inspecciones Guardadas en el Dispositivo
+                        </h3>
+                        <button onclick="borrarTodosRegistros()" class="text-slate-400 hover:text-red-400 text-xs flex items-center space-x-1">
+                            <i class="fa-solid fa-trash-can"></i>
+                            <span>Vaciar historial</span>
+                        </button>
+                    </div>
+
+                    <div id="listaNotas" class="space-y-2">
+                        <!-- Las notas se cargan dinámicamente desde JS / localStorage -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- PESTAÑA 4: PLAN INSTITUCIONAL & PRUEBA PILOTO -->
+            <!-- ========================================== -->
+            <section id="sec-piloto" class="hidden space-y-6">
+                <!-- Cronograma de Implementación -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-4">
+                    <div>
+                        <span class="bg-purple-950 text-purple-400 border border-purple-800 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase">Plan de Modernización Policial</span>
+                        <h2 class="text-xl font-black text-white mt-2">Proyecto de Prueba Piloto e Implementación Institucional</h2>
+                        <p class="text-xs text-slate-400">Plan estratégico para la incorporación de la herramienta PWA en los controles viales del Ministerio de Seguridad.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+                        <!-- FASE 1 -->
+                        <div class="bg-slate-950 p-4 rounded-xl border-t-4 border-blue-500 border-x border-b border-slate-800">
+                            <span class="text-[10px] text-blue-400 font-bold uppercase">Semana 1 - 2</span>
+                            <h4 class="text-sm font-bold text-white mt-1">Fase 1: Desarrollo & Carga</h4>
+                            <p class="text-xs text-slate-400 mt-2">Consolidación teórica del curso, protocolos de emergencias viales y desarrollo PWA.</p>
+                        </div>
+                        <!-- FASE 2 -->
+                        <div class="bg-slate-950 p-4 rounded-xl border-t-4 border-emerald-500 border-x border-b border-slate-800">
+                            <span class="text-[10px] text-emerald-400 font-bold uppercase">Semana 3 - 6</span>
+                            <h4 class="text-sm font-bold text-white mt-1">Fase 2: Prueba Piloto en Ruta</h4>
+                            <p class="text-xs text-slate-400 mt-2">Despliegue de prueba en Desaguadero, Uspallata y Zapata con 50 efectivos de la Policía Vial.</p>
+                        </div>
+                        <!-- FASE 3 -->
+                        <div class="bg-slate-950 p-4 rounded-xl border-t-4 border-amber-500 border-x border-b border-slate-800">
+                            <span class="text-[10px] text-amber-400 font-bold uppercase">Semana 7</span>
+                            <h4 class="text-sm font-bold text-white mt-1">Fase 3: Ajuste Offline v2.0</h4>
+                            <p class="text-xs text-slate-400 mt-2">Evaluación de respuesta en zonas de alta montaña sin cobertura celular.</p>
+                        </div>
+                        <!-- FASE 4 -->
+                        <div class="bg-slate-950 p-4 rounded-xl border-t-4 border-purple-500 border-x border-b border-slate-800">
+                            <span class="text-[10px] text-purple-400 font-bold uppercase">Semana 8</span>
+                            <h4 class="text-sm font-bold text-white mt-1">Fase 4: Aprobación Definitiva</h4>
+                            <p class="text-xs text-slate-400 mt-2">Elevación del informe final a la Jefatura de Policía de Mendoza para norma de uso oficial.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPIs E INDICADORES DE IMPACTO -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 text-center shadow-lg">
+                        <div class="text-3xl font-black text-emerald-400">&lt; 30 seg</div>
+                        <p class="text-xs font-semibold text-slate-200 mt-1">Tiempo de Consulta en Ruta</p>
+                        <p class="text-[11px] text-slate-400 mt-2">Acceso ultrarrápido a protocolos de emergencia o guías QR sin demorar el tránsito.</p>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 text-center shadow-lg">
+                        <div class="text-3xl font-black text-cyan-400">100%</div>
+                        <p class="text-xs font-semibold text-slate-200 mt-1">Operatividad Offline</p>
+                        <p class="text-[11px] text-slate-400 mt-2">Funciona sin conexión a internet en pasos cordilleranos y rutas desérticas.</p>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 text-center shadow-lg">
+                        <div class="text-3xl font-black text-red-400">0%</div>
+                        <p class="text-xs font-semibold text-slate-200 mt-1">Margen de Inacción</p>
+                        <p class="text-[11px] text-slate-400 mt-2">Pautas claras de respuesta policial ante derrames tóxicos o riesgo de explosión.</p>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- PIE DE PÁGINA INSTITUCIONAL -->
+    <footer class="bg-slate-950 border-t border-slate-850 py-6 mt-12 text-slate-400 text-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="space-y-1 text-center md:text-left">
+                <p class="font-bold text-slate-200">Trabajo Integrador Final • Diego Javier Fernández</p>
+                <p class="text-slate-500">Ministerio de Seguridad y Justicia de Mendoza | Curso: <em>Nuestro suelo. Maravillas minerales de Mendoza</em></p>
+            </div>
+            <div class="flex items-center space-x-3 text-slate-500">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] bg-slate-900 border border-slate-800">
+                    <i class="fa-solid fa-lock text-emerald-500 mr-1"></i> Entorno Seguro PWA
+                </span>
+                <span>•</span>
+                <span>Mendoza, Argentina</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL SIMULADOR LLAMADA CEO / 911 -->
+    <div id="modalCEO" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border-2 border-red-600 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl relative animate-fadeIn">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <span class="text-red-500 font-bold flex items-center text-sm">
+                    <i class="fa-solid fa-phone-volume mr-2 animate-pulse"></i> Enlace Telefónico CEO / 911
+                </span>
+                <button onclick="cerrarModalCEO()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="space-y-3 text-xs text-slate-300">
+                <p class="font-bold text-white text-sm">Protocolo de Comunicación de Emergencia por Radio / Teléfono:</p>
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 font-mono text-[11px] space-y-1 text-slate-300">
+                    <p><strong class="text-amber-400">1. Ubicación:</strong> Ruta, Kilómetro exacto y sentido de circulación.</p>
+                    <p><strong class="text-amber-400">2. Panel Naranja:</strong> Informar Número ONU e Identificador de Riesgo.</p>
+                    <p><strong class="text-amber-400">3. Estado de Unidad:</strong> Volcamiento, derrames activados o fuego expuesto.</p>
+                    <p><strong class="text-amber-400">4. Victimas:</strong> Chofer atrapado o heridos en el perímetro.</p>
+                </div>
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button onclick="cerrarModalCEO()" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-xs font-semibold">Cerrar Ventana</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LÓGICO DE LA APLICACIÓN -->
+    <script>
+        // --- NAVEGACIÓN ENTRE PESTAÑAS ---
+        function cambiarPestana(pestana) {
+            // Ocultar todas las secciones
+            document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
+            
+            // Desmarcar todos los botones
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-red-600', 'text-white', 'shadow-lg', 'shadow-red-900/40', 'border-red-500');
+                btn.classList.add('text-slate-300', 'border-transparent');
+            });
+
+            // Mostrar la sección seleccionada
+            document.getElementById('sec-' + pestana).classList.remove('hidden');
+
+            // Marcar botón activo
+            const btnActivo = document.getElementById('tab-' + pestana);
+            btnActivo.classList.add('bg-red-600', 'text-white', 'shadow-lg', 'shadow-red-900/40', 'border-red-500');
+            btnActivo.classList.remove('text-slate-300', 'border-transparent');
+        }
+
+        // --- FILTRO DE BÚSQUEDA EN TIEMPO REAL ---
+        function filtrarContenido() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const btnClear = document.getElementById('clearSearch');
+
+            if (query.length > 0) {
+                btnClear.classList.remove('hidden');
+            } else {
+                btnClear.classList.add('hidden');
+            }
+
+            const tarjetas = document.querySelectorAll('.searchable-card');
+            tarjetas.forEach(card => {
+                const texto = card.innerText.toLowerCase();
+                if (texto.includes(query)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function limpiarBusqueda() {
+            document.getElementById('searchInput').value = '';
+            filtrarContenido();
+        }
+
+        // --- SIMULADOR DE LLAMADA CEO ---
+        function simularLlamadaCEO() {
+            document.getElementById('modalCEO').classList.remove('hidden');
+        }
+
+        function cerrarModalCEO() {
+            document.getElementById('modalCEO').classList.add('hidden');
+        }
+
+        // --- SIMULADOR DE INSPECCIÓN POR UNIDAD ---
+        function simularChequeo(tipo) {
+            const res = document.getElementById('chequeoResultado');
+            if (tipo === 'aridos') {
+                res.innerHTML = `
+                    <div class="text-emerald-400 font-bold mb-1"><i class="fa-solid fa-truck"></i> Camión de Áridos y Rocas (Ripio, Arena, Cal):</div>
+                    <ul class="list-disc list-inside space-y-1 text-slate-300">
+                        <li>Exigir Guía de Tránsito de Minerales con código QR oficial.</li>
+                        <li>Verificar Lona o Cubierta protectora de carga instalada (evita caída de material).</li>
+                        <li>Cotejar Tonelaje Máximo permitido en balanza o en remito de cantera origen.</li>
+                    </ul>
+                `;
+            } else if (tipo === 'combustibles') {
+                res.innerHTML = `
+                    <div class="text-amber-400 font-bold mb-1"><i class="fa-solid fa-gas-pump"></i> Cisterna de Combustibles (Nafta, Gasoil):</div>
+                    <ul class="list-disc list-inside space-y-1 text-slate-300">
+                        <li>Verificar Paneles Naranja ONU visibles (ej. 33 / 1203 en ambos laterales y atrás).</li>
+                        <li>Ficha FDS/MSDS en la cabina del vehículo.</li>
+                        <li>Extintores de incendios cargados y cadena de descarga a tierra conectada.</li>
+                    </ul>
+                `;
+            } else if (tipo === 'quimicos') {
+                res.innerHTML = `
+                    <div class="text-red-400 font-bold mb-1"><i class="fa-solid fa-vial-circle-check"></i> Sustancias Químicas e Insumos Mineros:</div>
+                    <ul class="list-disc list-inside space-y-1 text-slate-300">
+                        <li>Cotejar Ley N.º 7.722 si el destino declarado es minería metalífera.</li>
+                        <li>Hoja de Ruta con consignatario final verificado.</li>
+                        <li>Rombos NFPA 704 de clasificación de riesgo claramente visibles.</li>
+                    </ul>
+                `;
+            }
+        }
+
+        // --- GESTIÓN DE NOTAS / REGISTROS EN LOCALSTORAGE ---
+        function obtenerNotasStorage() {
+            const notas = localStorage.getItem('notas_policia_mendoza');
+            return notas ? JSON.parse(notas) : [];
+        }
+
+        function guardarNota(event) {
+            event.preventDefault();
+            const puesto = document.getElementById('inputPuesto').value;
+            const patente = document.getElementById('inputPatente').value.toUpperCase();
+            const carga = document.getElementById('inputCarga').value;
+            const estado = document.getElementById('inputEstado').value;
+            const obs = document.getElementById('inputObs').value;
+
+            const nuevaNota = {
+                id: Date.now(),
+                fecha: new Date().toLocaleString('es-AR'),
+                puesto,
+                patente,
+                carga,
+                estado,
+                obs: obs || 'Sin observaciones adicionales.'
+            };
+
+            const notas = obtenerNotasStorage();
+            notas.unshift(nuevaNota); // Agregar al inicio
+            localStorage.setItem('notas_policia_mendoza', JSON.stringify(notas));
+
+            // Resetear formulario y recargar lista
+            document.getElementById('formRegistro').reset();
+            cargarNotasUI();
+        }
+
+        function eliminarNota(id) {
+            let notas = obtenerNotasStorage();
+            notas = notas.filter(n => n.id !== id);
+            localStorage.setItem('notas_policia_mendoza', JSON.stringify(notas));
+            cargarNotasUI();
+        }
+
+        function borrarTodosRegistros() {
+            if (confirm('¿Está seguro de que desea eliminar todo el historial de inspecciones guardadas?')) {
+                localStorage.removeItem('notas_policia_mendoza');
+                cargarNotasUI();
+            }
+        }
+
+        function cargarNotasUI() {
+            const contenedor = document.getElementById('listaNotas');
+            const notas = obtenerNotasStorage();
+
+            if (notas.length === 0) {
+                contenedor.innerHTML = `
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-center text-xs text-slate-500">
+                        No hay inspecciones registradas en este dispositivo. Complete el formulario superior para guardar una nota de control.
+                    </div>
+                `;
+                return;
+            }
+
+            contenedor.innerHTML = notas.map(n => {
+                let badgeColor = 'bg-emerald-950 text-emerald-400 border-emerald-800';
+                if (n.estado === 'OBSERVADO') badgeColor = 'bg-amber-950 text-amber-400 border-amber-800';
+                if (n.estado === 'RETENIDO') badgeColor = 'bg-red-950 text-red-400 border-red-800';
+
+                return `
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs">
+                        <div class="space-y-1">
+                            <div class="flex items-center space-x-2">
+                                <span class="font-bold text-white text-sm font-mono">${n.patente}</span>
+                                <span class="px-2 py-0.5 rounded border text-[10px] font-bold ${badgeColor}">${n.estado}</span>
+                                <span class="text-slate-500 text-[10px]">• ${n.fecha}</span>
+                            </div>
+                            <p class="text-slate-300"><strong>Puesto:</strong> ${n.puesto} | <strong>Carga:</strong> ${n.carga}</p>
+                            <p class="text-slate-400 text-[11px]"><em>Obs:</em> ${n.obs}</p>
+                        </div>
+                        <button onclick="eliminarNota(${n.id})" class="text-slate-500 hover:text-red-400 p-1.5 self-end sm:self-center">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Cargar notas al iniciar
+        window.onload = function() {
+            cargarNotasUI();
+        };
+    </script>
+</body>
+</html>
